@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [[ -f .dkr ]]; then
+  eval "$(awk '/^[A-Z]/ { print "export " $0 }' .dkr)"
+fi
+
+if [[ -n "${IMAGE}" ]]; then
+  docker run --interactive \
+             --tty \
+             --rm \
+             ${DKR_OPTS} \
+             --volume=$(pwd):/app \
+             --workdir=/app \
+             ${IMAGE} \
+             ${@}
+else
+  echo "IMAGE variable not set. Aborting" >&2
+  exit 1
+fi
