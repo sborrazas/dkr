@@ -4,16 +4,21 @@ if [[ -f .dkr ]]; then
   eval "$(awk '/^[A-Z]/ { print "export " $0 }' .dkr)"
 fi
 
-if [[ -n "${IMAGE}" ]]; then
-  docker run --interactive \
-             --tty \
-             --rm \
-             ${DKR_OPTS} \
-             --volume=$(pwd):/app \
-             --workdir=/app \
-             ${IMAGE} \
-             ${@}
-else
+if [[ ! -n "${IMAGE}" ]]; then
   echo "IMAGE variable not set. Aborting" >&2
   exit 1
 fi
+
+if [[ -z $(docker image ls -f "reference=${IMAGE}" -q) ]]; then
+  echo "IMAGE doesn't exist, creating it using Dockerfile" >&2
+  docker build -t "${IMAGE}" .
+fi
+
+docker run --interactive \
+           --tty \
+           --rm \
+           ${DKR_OPTS} \
+           --volume=$(pwd):/app \
+           --workdir=/app \
+           ${IMAGE} \
+           ${@}
